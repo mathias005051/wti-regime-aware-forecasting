@@ -1,1 +1,90 @@
+# WTI Regime-Aware Forecasting
 
+**News and Macro Signals for WTI Crude Oil Direction: A Regime-Aware Model for Energy Hedging Decision Support**
+
+Capstone project — Department of Industrial Engineering, Taiwan-Paraguay Polytechnic University (UPTP) & Department of Industrial Management, National Taiwan University of Science and Technology (NTUST)
+
+**Authors:** Filippo Josue Maldonado Centurion, Mathias Nicolas Anastacio Pereira Rodriguez
+**Instructor:** Prof. Shih-Hsien Tseng
+
+---
+
+## Overview
+
+Energy-intensive industries (airlines, petrochemicals, logistics) allocate 30–40% of operating costs to fuel, making WTI crude oil direction a critical input for hedging decisions. Existing directional prediction models rely on macro-financial signals published with lags of weeks to months, missing geopolitical shocks that appear in news media days before they show up in price data.
+
+This project develops a **regime-aware XGBoost model** that fuses:
+- **GDELT** event-based news signals (near real-time, 15-min updates)
+- **EIA** weekly crude oil inventory data
+- **Macro-financial indicators** (VIX returns, 10-year Treasury yield)
+
+for weekly binary directional classification (**UP / DOWN**) of WTI crude oil, with a deterministic rule engine encoding economic domain knowledge and a 30-seed robustness evaluation framework.
+
+## Key Results
+
+| Metric | Value |
+|---|---|
+| F1-score (out-of-sample, 104 weeks) | **0.667** |
+| Mean F1 across 30 seeds | 0.630 ± 0.019 |
+| Signal-guided cumulative return | **+114.4%** (Sharpe = 1.27) |
+| Passive unhedged baseline | +19.2% (Sharpe = 0.41) |
+| Seeds beating the passive baseline | 30 / 30 |
+| Ensemble (GDELT + technical model) | F1 = 0.678, +125.9% cumulative return |
+
+Test period: May 2024 – April 2026 (104 weeks), characterized by U.S.-China trade escalation and the March 2026 Strait of Hormuz closure.
+
+## Methodology
+
+1. **Monthly baseline model** — XGBoost + Empirical Mode Decomposition (EMD) on macro-financial features; establishes the empirical case for higher-frequency modeling by showing 4 of 8 errors were geopolitical shocks invisible to lagged macro data.
+2. **Weekly technical model** — Price/technical/macro features at lag 0–52, serves as a price-history baseline.
+3. **GDELT-augmented model** — Adds narrative tone, coverage volume, and causal event signals (supply threats, trade tensions, China demand) with a causal feature engineering pipeline.
+4. **Rule engine (A5)** — Deterministic override/boost rules combining GDELT event signals with EIA inventory confirmation.
+5. **Macro-financial augmentation** — Adds VIX returns and T10Y yield changes as complementary regime signals (`A5+vix_ret`, `A5+t10y_fall`).
+6. **Ensemble** — Combines the GDELT model with the technical model via a targeted DOWN-override rule in specific disagreement conditions.
+
+Validation includes purged cross-validation with a 4-week embargo, label permutation testing, contemporaneous correlation checks, and an intentional-leakage calibration test.
+
+## Repository Structure
+
+```
+├── data/                  # Raw and processed data (GDELT, EIA, FRED, Yahoo Finance)
+├── notebooks/             # Exploratory analysis and model development
+├── src/
+│   ├── features/          # Feature engineering pipelines (causal, EMD, technical)
+│   ├── models/            # Monthly baseline, weekly technical, GDELT, ensemble
+│   ├── rule_engine/        # Deterministic rule engine (A5)
+│   └── evaluation/         # Backtesting, robustness (30-seed), leakage tests
+├── results/               # Tables, figures, and metrics reported in the paper
+├── report/                # Full capstone paper (PDF)
+└── README.md
+```
+
+*(Adjust this section to match your actual folder layout before pushing.)*
+
+## Data Sources
+
+- **GDELT** — Global Database of Events, Language, and Tone (BigQuery public dataset)
+- **EIA** — U.S. Energy Information Administration weekly crude oil inventory reports
+- **FRED** — Federal Reserve Economic Data (VIX, 10-year Treasury yield, CPI, industrial production)
+- **Yahoo Finance** — WTI, Brent, S&P 500, DXY, Shanghai Composite Index
+
+## Limitations & Future Work
+
+- Weekly-frequency data cannot capture intra-week anticipatory price movements (e.g., the March 2026 Hormuz closure).
+- Extensions such as probability calibration, hedge ratio optimization, and transaction cost modeling are left for future work.
+- A dynamic ML-based ensemble router is identified as a priority extension, pending a larger historical dataset.
+
+## Citation
+
+If you reference this work, please cite it as:
+
+```
+Maldonado Centurion, F. J., & Pereira Rodriguez, M. N. A. (2026). News and Macro Signals
+for WTI Crude Oil Direction: A Regime-Aware Model for Energy Hedging Decision Support.
+Capstone Project, Taiwan-Paraguay Polytechnic University & National Taiwan University
+of Science and Technology.
+```
+
+## License
+
+Specify a license (e.g., MIT) if you intend this repository to be reused by others.
